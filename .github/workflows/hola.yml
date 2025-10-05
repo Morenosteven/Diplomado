@@ -1,0 +1,18 @@
+name: "prueba de funcionamiento"
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Hola mundo"
+        run: echo "Hola mundo"
+      - name: fecha
+        run: date
+      - name: "muestra el contenido del directorio"
+        run: ls -la
