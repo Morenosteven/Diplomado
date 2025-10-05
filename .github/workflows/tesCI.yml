@@ -1,0 +1,65 @@
+name: CI & Despliegue a GitHub Pages
+
+on:
+  push:
+    branches: ["main", "frontend"] # Se activa con cada push a la rama 'main'
+  pull_request:
+    branches: ["main"] # También se activa con cada Pull Request
+  workflow_dispatch: # Permite ejecución manual
+
+concurrency:
+  group: 'CI-CD-GHPages'
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Verificación de Código (LINTING BÁSICO)
+  verificar_codigo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del Repositorio
+        uses: actions/checkout@v4
+
+      - name: 🔍 Mostrar archivos (Opcional, para depurar)
+        run: ls -R
+
+      # Aquí iría un linter de HTML/CSS más avanzado,
+      # pero para un CI básico, solo verificamos que los archivos existan.
+      - name: ✅ Verificar archivos principales
+        run: |
+          if [ -f index.html ] && [ -f index.css ]; then
+            echo "Archivos HTML y CSS encontrados. ¡CI Básico Superado!"
+          else
+            echo "Error: Faltan archivos index.html o index.css"
+            exit 1
+          fi
+
+  # Job 2: Despliegue de la Página (Se ejecuta SOLO si la verificación pasa)
+  desplegar_pagina:
+    needs: verificar_codigo # Depende de que el job de verificación termine con éxito
+    if: github.ref == 'refs/heads/main' # Solo despliega si es la rama 'main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout del Repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir Artifactos de Despliegue
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # El directorio que contiene tus archivos HTML y CSS
+          path: './'
+
+      - name: Iniciar Despliegue a Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
